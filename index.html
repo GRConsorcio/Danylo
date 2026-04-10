@@ -1,0 +1,248 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.container { background: #111; min-height: 100vh; padding: 24px 16px; font-family: Arial, sans-serif; }
+.header { text-align: center; margin-bottom: 24px; position: relative; }
+.logo-area { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 8px; }
+.logo-img { width: 64px; height: 64px; object-fit: contain; border-radius: 4px; }
+.logo-text { font-size: 13px; color: #888; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.title { font-size: 22px; font-weight: 700; color: #C9A84C; letter-spacing: 1px; }
+.subtitle { font-size: 13px; color: #777; margin-top: 4px; letter-spacing: 1px; }
+.gold-line { width: 80px; height: 2px; background: linear-gradient(90deg, transparent, #C9A84C, transparent); margin: 10px auto; }
+.admin-btn { position: absolute; top: 0; right: 0; background: transparent; border: 1px solid #333; color: #777; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; letter-spacing: 1px; transition: all 0.2s; }
+.admin-btn:hover { border-color: #C9A84C; color: #C9A84C; }
+.sync-badge { position: absolute; top: 0; left: 0; font-size: 11px; padding: 5px 10px; border-radius: 4px; letter-spacing: 1px; background: #1a1a1a; border: 1px solid #333; color: #555; }
+.sync-badge.ok { border-color: #1a5c2a; color: #2ecc71; }
+.sync-badge.err { border-color: #5c1a1a; color: #e74c3c; }
+table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+thead tr { background: #000; }
+thead th { padding: 14px 10px; color: #C9A84C; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #C9A84C44; text-align: center; }
+thead th:first-child { text-align: left; padding-left: 20px; }
+tbody tr { border-bottom: 1px solid #2a2a2a; transition: background 0.2s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #222; }
+tbody td { padding: 12px 10px; text-align: center; color: #ddd; font-size: 14px; }
+tbody td:first-child { text-align: left; padding-left: 20px; font-weight: 500; color: #fff; }
+.total-cell { color: #C9A84C; font-weight: 700; font-size: 15px; }
+input[type=number] { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 6px 8px; width: 72px; text-align: center; border-radius: 4px; font-size: 14px; }
+input[type=number]:focus { outline: none; border-color: #C9A84C; }
+input[type=number]::-webkit-inner-spin-button { opacity: 0.3; }
+.rank-1 td:first-child::before { content: "🥇 "; }
+.rank-2 td:first-child::before { content: "🥈 "; }
+.rank-3 td:first-child::before { content: "🥉 "; }
+tfoot tr { background: #000; border-top: 1px solid #C9A84C44; }
+tfoot td { padding: 12px 10px; color: #C9A84C; font-weight: 700; font-size: 13px; text-align: center; }
+tfoot td:first-child { text-align: left; padding-left: 20px; letter-spacing: 1px; }
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.popup { background: #1a1a1a; border: 1px solid #C9A84C44; border-radius: 12px; width: 90%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 28px 24px; position: relative; }
+.popup h2 { color: #C9A84C; font-size: 16px; font-weight: 700; letter-spacing: 1px; margin-bottom: 20px; text-align: center; border-bottom: 1px solid #333; padding-bottom: 14px; }
+.close-btn { position: absolute; top: 16px; right: 18px; background: none; border: none; color: #666; font-size: 20px; cursor: pointer; line-height: 1; }
+.close-btn:hover { color: #C9A84C; }
+.section-label { font-size: 11px; color: #888; letter-spacing: 2px; text-transform: uppercase; margin: 18px 0 10px; }
+.field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.field-row input[type=text] { flex: 1; background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; }
+.field-row input[type=text]:focus { outline: none; border-color: #C9A84C; }
+.del-btn { background: none; border: 1px solid #444; color: #666; width: 30px; height: 30px; border-radius: 4px; cursor: pointer; font-size: 16px; flex-shrink: 0; }
+.del-btn:hover { border-color: #c0392b; color: #c0392b; }
+.add-btn { background: none; border: 1px dashed #444; color: #888; padding: 8px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 4px; transition: all 0.2s; }
+.add-btn:hover { border-color: #C9A84C; color: #C9A84C; }
+.save-btn { background: #C9A84C; border: none; color: #000; padding: 10px 24px; border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; letter-spacing: 1px; }
+.save-btn:hover { background: #e0bc5a; }
+.input-full { width: 100%; background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; margin-bottom: 8px; }
+.input-full:focus { outline: none; border-color: #C9A84C; }
+.semanas-row { display: flex; align-items: center; gap: 12px; }
+.semanas-row input[type=number] { width: 60px; background: #111; }
+.loading { text-align: center; color: #555; padding: 40px; font-size: 14px; letter-spacing: 1px; }
+</style>
+
+<div class="container">
+  <div class="header">
+    <div class="sync-badge" id="syncBadge">● CONECTANDO</div>
+    <button class="admin-btn" onclick="abrirAdmin()">⚙ ADMIN</button>
+    <div class="logo-area">
+      <img class="logo-img" src="/mnt/user-data/uploads/gr_logo.jpeg" onerror="this.style.display='none'" />
+      <div>
+        <div class="logo-text">GR Consórcio</div>
+        <div class="title">Equipe Danylo</div>
+      </div>
+    </div>
+    <div class="gold-line"></div>
+    <div class="subtitle" id="subtitulo">Carregando...</div>
+  </div>
+  <div id="tableWrap"><div class="loading">Conectando ao banco de dados...</div></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="fecharAdmin(event)">
+  <div class="popup" id="popup">
+    <button class="close-btn" onclick="fecharAdmin(null,true)">✕</button>
+    <h2>⚙ PAINEL ADMIN</h2>
+    <div class="section-label">Nome do mês / período</div>
+    <input class="input-full" type="text" id="admin-mes" placeholder="Ex: Abril 2025" />
+    <div class="section-label">Número de semanas</div>
+    <div class="semanas-row">
+      <input type="number" id="admin-semanas" min="1" max="8" value="4" style="width:60px;background:#111;" />
+      <span style="color:#777;font-size:13px;">semanas (máx. 8)</span>
+    </div>
+    <div class="section-label">Vendedores</div>
+    <div id="admin-vendedores"></div>
+    <button class="add-btn" onclick="addVendedorAdmin()">+ Adicionar vendedor</button>
+    <button class="save-btn" onclick="salvarAdmin()">SALVAR ALTERAÇÕES</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCX7ocMbAK95WIKlTR-qSUojxEhDwb1mCo",
+  authDomain: "homegr-71157.firebaseapp.com",
+  projectId: "homegr-71157",
+  storageBucket: "homegr-71157.firebasestorage.app",
+  messagingSenderId: "353566889780",
+  appId: "1:353566889780:web:aa363de0a0c3986a243761",
+  measurementId: "G-MEFB6WRY5V",
+  databaseURL: "https://homegr-71157-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const dbRef = ref(db, 'equipe_danylo');
+
+const badge = document.getElementById('syncBadge');
+let config = { mes: "Controle de vendas mensal", semanas: 4, vendedores: ["Vendedor 1","Vendedor 2","Vendedor 3"] };
+let dados = [];
+let ignoreNext = false;
+
+function setSyncOk() { badge.textContent = '● SINCRONIZADO'; badge.className = 'sync-badge ok'; }
+function setSyncErr() { badge.textContent = '● OFFLINE'; badge.className = 'sync-badge err'; }
+function setSyncSaving() { badge.textContent = '● SALVANDO'; badge.className = 'sync-badge'; }
+
+function render() {
+  document.getElementById('subtitulo').textContent = config.mes;
+  const wrap = document.getElementById('tableWrap');
+
+  const sorted = [...dados].sort((a,b) => b.s.reduce((x,y)=>x+y,0) - a.s.reduce((x,y)=>x+y,0));
+  const totS = Array(config.semanas).fill(0);
+
+  let ths = '<thead><tr><th>Vendedor</th>';
+  for(let i=0;i<config.semanas;i++) ths += `<th>Semana ${i+1}</th>`;
+  ths += '<th>Total</th></tr></thead>';
+
+  let trs = '';
+  sorted.forEach((v, idx) => {
+    const total = v.s.reduce((a,b)=>a+b,0);
+    v.s.forEach((val,i) => { if(i<config.semanas) totS[i]+=val; });
+    let cls = idx===0&&total>0?'rank-1':idx===1&&total>0?'rank-2':idx===2&&total>0?'rank-3':'';
+    let cells = `<td>${v.nome}</td>`;
+    for(let si=0;si<config.semanas;si++) {
+      cells += `<td><input type="number" min="0" value="${v.s[si]||0}" data-nome="${v.nome}" data-s="${si}" /></td>`;
+    }
+    cells += `<td class="total-cell">${total}</td>`;
+    trs += `<tr class="${cls}">${cells}</tr>`;
+  });
+
+  let ftds = '<tr><td>Total equipe</td>';
+  let gt=0;
+  for(let i=0;i<config.semanas;i++){ftds+=`<td>${totS[i]}</td>`;gt+=totS[i];}
+  ftds+=`<td class="total-cell">${gt}</td></tr>`;
+
+  wrap.innerHTML = `<table>${ths}<tbody id="tbody">${trs}</tbody><tfoot>${ftds}</tfoot></table>`;
+
+  document.querySelectorAll('#tbody input').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const nome = e.target.dataset.nome;
+      const si = parseInt(e.target.dataset.s);
+      const v = dados.find(x=>x.nome===nome);
+      if(!v) return;
+      v.s[si] = parseInt(e.target.value)||0;
+      render();
+      setSyncSaving();
+      const path = `equipe_danylo/dados/${nome.replace(/[.#$\[\]]/g,'_')}/s`;
+      set(ref(db, path), v.s).then(setSyncOk).catch(setSyncErr);
+    });
+  });
+}
+
+onValue(dbRef, snap => {
+  const val = snap.val();
+  if(val) {
+    if(val.config) config = val.config;
+    if(val.dados) {
+      dados = Object.entries(val.dados).map(([key, d]) => ({
+        nome: d.nome || key,
+        s: Array.isArray(d.s) ? d.s : Array(config.semanas).fill(0)
+      }));
+    } else {
+      dados = config.vendedores.map(n => ({ nome: n, s: Array(config.semanas).fill(0) }));
+    }
+  } else {
+    dados = config.vendedores.map(n => ({ nome: n, s: Array(config.semanas).fill(0) }));
+    set(dbRef, { config, dados: Object.fromEntries(dados.map(d=>([d.nome.replace(/[.#$\[\]]/g,'_'),d]))) });
+  }
+  render();
+  setSyncOk();
+}, err => { setSyncErr(); });
+
+window.abrirAdmin = function() {
+  document.getElementById('admin-mes').value = config.mes;
+  document.getElementById('admin-semanas').value = config.semanas;
+  const cont = document.getElementById('admin-vendedores');
+  cont.innerHTML = '';
+  config.vendedores.forEach((n, i) => {
+    const row = document.createElement('div');
+    row.className = 'field-row';
+    row.innerHTML = `<input type="text" value="${n}" data-idx="${i}" placeholder="Nome do vendedor" /><button class="del-btn" onclick="removerVendedor(${i})">✕</button>`;
+    cont.appendChild(row);
+  });
+  document.getElementById('overlay').classList.add('open');
+};
+
+window.fecharAdmin = function(e, force) {
+  if(force || (e && e.target===document.getElementById('overlay'))) {
+    document.getElementById('overlay').classList.remove('open');
+  }
+};
+
+window.addVendedorAdmin = function() {
+  config.vendedores.push("Novo Vendedor");
+  window.abrirAdmin();
+};
+
+window.removerVendedor = function(idx) {
+  if(config.vendedores.length<=1) return;
+  const nome = config.vendedores[idx];
+  config.vendedores.splice(idx,1);
+  dados = dados.filter(d=>d.nome!==nome);
+  window.abrirAdmin();
+};
+
+window.salvarAdmin = function() {
+  const novoMes = document.getElementById('admin-mes').value.trim() || config.mes;
+  const novasSemanas = Math.min(8, Math.max(1, parseInt(document.getElementById('admin-semanas').value)||4));
+  const inputs = document.querySelectorAll('#admin-vendedores input[type=text]');
+  const novosNomes = Array.from(inputs).map(i=>i.value.trim()||"Vendedor");
+
+  novosNomes.forEach((nome,i) => {
+    const old = dados.find(d=>d.nome===config.vendedores[i]);
+    if(old) old.nome = nome;
+    else dados.push({ nome, s: Array(novasSemanas).fill(0) });
+  });
+  dados = dados.filter(d=>novosNomes.includes(d.nome));
+  dados.forEach(d => {
+    while(d.s.length<novasSemanas) d.s.push(0);
+    d.s = d.s.slice(0,novasSemanas);
+  });
+
+  config.mes = novoMes;
+  config.semanas = novasSemanas;
+  config.vendedores = novosNomes;
+
+  document.getElementById('overlay').classList.remove('open');
+  setSyncSaving();
+
+  const dadosObj = Object.fromEntries(dados.map(d=>([d.nome.replace(/[.#$\[\]]/g,'_'), d])));
+  set(dbRef, { config, dados: dadosObj }).then(() => { setSyncOk(); render(); }).catch(setSyncErr);
+};
+</script>
