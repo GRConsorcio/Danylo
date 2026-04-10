@@ -96,14 +96,14 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, onValue, set, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCX7ocMbAK95WIKlTR-qSUojxEhDwb1mCo",
-  authDomain: "homegr-71157.firebaseapp.com",
-  projectId: "homegr-71157",
-  storageBucket: "homegr-71157.firebasestorage.app",
-  messagingSenderId: "353566889780",
-  appId: "1:353566889780:web:aa363de0a0c3986a243761",
+  apiKey: "AIzaSyAStKygESgvDlcqL8AcPd2K6cQLDS4IpuQ",
+  authDomain: "ranking-chis.firebaseapp.com",
+  projectId: "ranking-chis",
+  storageBucket: "ranking-chis.firebasestorage.app",
+  messagingSenderId: "817538775589",
+  appId: "1:817538775589:web:23e5710cad96ef674a1dcc",
   measurementId: "G-MEFB6WRY5V",
-  databaseURL: "https://homegr-71157-default-rtdb.firebaseio.com"
+  databaseURL: "https://ranking-chis-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -206,12 +206,17 @@ window.fecharAdmin = function(e, force) {
 };
 
 window.addVendedorAdmin = function() {
+  const inputs = document.querySelectorAll('#admin-vendedores input[type=text]');
+  inputs.forEach((inp, i) => { if(config.vendedores[i] !== undefined) config.vendedores[i] = inp.value.trim() || config.vendedores[i]; });
   config.vendedores.push("Novo Vendedor");
+  dados.push({ nome: "Novo Vendedor", s: Array(config.semanas).fill(0) });
   window.abrirAdmin();
 };
 
 window.removerVendedor = function(idx) {
   if(config.vendedores.length<=1) return;
+  const inputs = document.querySelectorAll('#admin-vendedores input[type=text]');
+  inputs.forEach((inp, i) => { if(config.vendedores[i] !== undefined) config.vendedores[i] = inp.value.trim() || config.vendedores[i]; });
   const nome = config.vendedores[idx];
   config.vendedores.splice(idx,1);
   dados = dados.filter(d=>d.nome!==nome);
@@ -222,27 +227,25 @@ window.salvarAdmin = function() {
   const novoMes = document.getElementById('admin-mes').value.trim() || config.mes;
   const novasSemanas = Math.min(8, Math.max(1, parseInt(document.getElementById('admin-semanas').value)||4));
   const inputs = document.querySelectorAll('#admin-vendedores input[type=text]');
-  const novosNomes = Array.from(inputs).map(i=>i.value.trim()||"Vendedor");
+  const novosNomes = Array.from(inputs).map(inp => inp.value.trim() || 'Vendedor');
 
-  novosNomes.forEach((nome,i) => {
-    const old = dados.find(d=>d.nome===config.vendedores[i]);
-    if(old) old.nome = nome;
-    else dados.push({ nome, s: Array(novasSemanas).fill(0) });
-  });
-  dados = dados.filter(d=>novosNomes.includes(d.nome));
-  dados.forEach(d => {
-    while(d.s.length<novasSemanas) d.s.push(0);
-    d.s = d.s.slice(0,novasSemanas);
+  const novosDados = novosNomes.map((nome, i) => {
+    const nomeAntigo = config.vendedores[i];
+    const existing = dados.find(d => d.nome === nomeAntigo) || dados.find(d => d.nome === nome);
+    const s = existing ? [...existing.s] : Array(novasSemanas).fill(0);
+    while(s.length < novasSemanas) s.push(0);
+    return { nome, s: s.slice(0, novasSemanas) };
   });
 
   config.mes = novoMes;
   config.semanas = novasSemanas;
   config.vendedores = novosNomes;
+  dados = novosDados;
 
   document.getElementById('overlay').classList.remove('open');
   setSyncSaving();
 
-  const dadosObj = Object.fromEntries(dados.map(d=>([d.nome.replace(/[.#$\[\]]/g,'_'), d])));
+  const dadosObj = Object.fromEntries(dados.map(d => ([d.nome.replace(/[.#$\[\]]/g,'_'), d])));
   set(dbRef, { config, dados: dadosObj }).then(() => { setSyncOk(); render(); }).catch(setSyncErr);
 };
 </script>
