@@ -219,11 +219,11 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
     <div class="section-label">Período / mês</div>
     <input class="input-full" type="text" id="admin-mes" placeholder="Ex: Abril 2025" />
 
-    <div class="section-label">Vendas do dia</div>
-    <input class="input-full" type="number" id="admin-dia" min="0" placeholder="Ex: 6" />
-
     <div class="section-label">Taxa de conversão (%)</div>
     <input class="input-full" type="number" id="admin-conv" min="0" step="0.01" placeholder="Ex: 2.24" />
+
+    <div class="section-label">Ações</div>
+    <button onclick="zerarHoje()" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;padding:8px;width:100%;border-radius:4px;cursor:pointer;font-size:13px;margin-bottom:8px;font-family:'Barlow',sans-serif;font-weight:600;letter-spacing:1px;">🔄 ZERAR VENDAS DO DIA AGORA</button>
 
     <div class="section-label">Número de semanas</div>
     <div class="semanas-row">
@@ -268,21 +268,81 @@ let config={
   vendedores:["Vendedor 1","Vendedor 2","Vendedor 3"]
 };
 let dados=[];
+// vendas_dia_snap: { nomeKey: { data: "YYYY-MM-DD", valor: N } }
+// Guarda quanto cada vendedor tinha acumulado nas semanas no início do dia.
+// Vendas do dia = total_semanas_atual - snapshot_inicio_dia
+let snapDia={}; // { nomeKey: { data, base } }  base = total semanas no início do dia
 
 function setSyncOk(){badge.textContent='● SINCRONIZADO';badge.className='sync-badge ok';}
 function setSyncErr(){badge.textContent='● OFFLINE';badge.className='sync-badge err';}
 function setSyncSaving(){badge.textContent='● SALVANDO';badge.className='sync-badge';}
 
+function dataHoje(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function nomeKey(nome){return nome.replace(/[.#$\[\]]/g,'_');}
+
+// Retorna quantas vendas um vendedor fez HOJE (total atual - base do início do dia)
+function vendasHojeVendedor(v){
+  const k=nomeKey(v.nome);
+  const totalAtual=v.s.reduce((a,b)=>a+b,0);
+  const entry=snapDia[k];
+  if(!entry||entry.data!==dataHoje()){
+    // Ainda não tem snapshot: registra agora
+    const base=totalAtual;
+    snapDia[k]={data:dataHoje(),base};
+    set(ref(db,`equipe_danylo/snapDia/${k}`),{data:dataHoje(),base,nome:v.nome}).catch(()=>{});
+    return 0;
+  }
+  return Math.max(0, totalAtual - entry.base);
+}
+
+// Ao carregar: verifica snapshots antigos e renova para hoje
+function inicializarSnapDia(snapVal){
+  const d=dataHoje();
+  dados.forEach(v=>{
+    const k=nomeKey(v.nome);
+    const entry=snapVal?.[k];
+    if(entry&&entry.data===d){
+      snapDia[k]=entry; // snapshot válido de hoje
+    }else{
+      // Novo dia ou sem snapshot: salva base atual
+      const base=v.s.reduce((a,b)=>a+b,0);
+      snapDia[k]={data:d,base};
+      set(ref(db,`equipe_danylo/snapDia/${k}`),{data:d,base,nome:v.nome}).catch(()=>{});
+    }
+  });
+}
+
+// Reset à meia-noite: atualiza o snapshot base para o total atual
+function agendarResetMeiaNoite(){
+  const agora=new Date();
+  const meianoite=new Date(agora);
+  meianoite.setHours(24,0,5,0); // 5s após meia-noite
+  const ms=meianoite-agora;
+  setTimeout(()=>{
+    const d=dataHoje();
+    dados.forEach(v=>{
+      const k=nomeKey(v.nome);
+      const base=v.s.reduce((a,b)=>a+b,0);
+      snapDia[k]={data:d,base};
+      set(ref(db,`equipe_danylo/snapDia/${k}`),{data:d,base,nome:v.nome}).catch(()=>{});
+    });
+    render();
+    agendarResetMeiaNoite();
+  },ms);
+}
+
 function render(){
-  // Header
   document.getElementById('headerTitle').textContent=(config.equipe||"Equipe").toUpperCase()+" — "+config.mes;
 
-  // Left panel stats
   const totalMes=dados.reduce((s,v)=>s+v.s.reduce((a,b)=>a+b,0),0);
+  const totalDia=dados.reduce((s,v)=>s+vendasHojeVendedor(v),0);
   const meta=config.meta||100;
   const pct=Math.min(100,Math.round(totalMes/meta*100));
 
-  document.getElementById('stat-dia').textContent=config.vendas_dia??0;
+  document.getElementById('stat-dia').textContent=totalDia;
   document.getElementById('stat-mes').textContent=totalMes;
   document.getElementById('progress-fill').style.width=pct+'%';
   document.getElementById('progress-meta').textContent='Meta do mês '+meta+' cotas.';
@@ -299,7 +359,7 @@ function render(){
   const medals=['🥇','🥈','🥉'];
 
   let ths='<thead><tr><th>Vendedor(a)</th>';
-  for(let i=0;i<config.semanas;i++)ths+=`<th>Semana ${i+1}</th>`;
+  for(let i=0;i<config.semanas;i++) ths+=`<th>Semana ${i+1}</th>`;
   ths+='<th class="col-total">Total</th></tr></thead>';
 
   let trs='';
@@ -324,7 +384,7 @@ function render(){
 
   if(window._setNumVendedores)window._setNumVendedores(sorted.length);
 
-  document.querySelectorAll('#tbody input').forEach(inp=>{
+  document.querySelectorAll('#tbody input[data-s]').forEach(inp=>{
     inp.addEventListener('change',e=>{
       const nome=e.target.dataset.nome;
       const si=parseInt(e.target.dataset.s);
@@ -333,8 +393,7 @@ function render(){
       v.s[si]=parseInt(e.target.value)||0;
       render();
       setSyncSaving();
-      const path=`equipe_danylo/dados/${nome.replace(/[.#$\[\]]/g,'_')}/s`;
-      set(ref(db,path),v.s).then(setSyncOk).catch(setSyncErr);
+      set(ref(db,`equipe_danylo/dados/${nomeKey(nome)}/s`),v.s).then(setSyncOk).catch(setSyncErr);
     });
   });
 }
@@ -351,12 +410,16 @@ onValue(dbRef,snap=>{
     }else{
       dados=config.vendedores.map(n=>({nome:n,s:Array(config.semanas).fill(0)}));
     }
+    inicializarSnapDia(val.snapDia||null);
   }else{
     dados=config.vendedores.map(n=>({nome:n,s:Array(config.semanas).fill(0)}));
-    set(dbRef,{config,dados:Object.fromEntries(dados.map(d=>[d.nome.replace(/[.#$\[\]]/g,'_'),d]))});
+    set(dbRef,{config,dados:Object.fromEntries(dados.map(d=>[nomeKey(d.nome),d]))});
+    inicializarSnapDia(null);
   }
   render();setSyncOk();
 },()=>setSyncErr());
+
+agendarResetMeiaNoite();
 
 window.salvarMeta=function(){
   config.meta=Math.max(1,parseInt(document.getElementById('meta-input').value)||100);
@@ -367,7 +430,6 @@ window.salvarMeta=function(){
 window.abrirAdmin=function(){
   document.getElementById('admin-equipe').value=config.equipe||'';
   document.getElementById('admin-mes').value=config.mes||'';
-  document.getElementById('admin-dia').value=config.vendas_dia??0;
   document.getElementById('admin-conv').value=config.conversao??0;
   document.getElementById('admin-semanas').value=config.semanas;
   const cont=document.getElementById('admin-vendedores');
@@ -408,7 +470,6 @@ window.removerVendedor=function(idx){
 window.salvarAdmin=function(){
   const novaEquipe=document.getElementById('admin-equipe').value.trim()||config.equipe;
   const novoMes=document.getElementById('admin-mes').value.trim()||config.mes;
-  const novoDia=parseInt(document.getElementById('admin-dia').value)||0;
   const novaConv=parseFloat(document.getElementById('admin-conv').value)||0;
   const novasSemanas=Math.min(8,Math.max(1,parseInt(document.getElementById('admin-semanas').value)||4));
   const inputs=document.querySelectorAll('#admin-vendedores input[type=text]');
@@ -422,12 +483,24 @@ window.salvarAdmin=function(){
     return{nome,s:s.slice(0,novasSemanas)};
   });
 
-  config={...config,equipe:novaEquipe,mes:novoMes,vendas_dia:novoDia,conversao:novaConv,semanas:novasSemanas,vendedores:novosNomes};
+  config={...config,equipe:novaEquipe,mes:novoMes,conversao:novaConv,semanas:novasSemanas,vendedores:novosNomes};
   dados=novosDados;
   document.getElementById('overlay').classList.remove('open');
   setSyncSaving();
-  const dadosObj=Object.fromEntries(dados.map(d=>[d.nome.replace(/[.#$\[\]]/g,'_'),d]));
+  const dadosObj=Object.fromEntries(dados.map(d=>[nomeKey(d.nome),d]));
   set(dbRef,{config,dados:dadosObj}).then(()=>{setSyncOk();render();}).catch(setSyncErr);
+};
+
+window.zerarHoje=function(){
+  if(!confirm('Zerar as vendas do dia de todos os vendedores?'))return;
+  const d=dataHoje();
+  dados.forEach(v=>{
+    const k=nomeKey(v.nome);
+    const base=v.s.reduce((a,b)=>a+b,0);
+    snapDia[k]={data:d,base};
+    set(ref(db,`equipe_danylo/snapDia/${k}`),{data:d,base,nome:v.nome}).catch(()=>{});
+  });
+  render();setSyncOk();
 };
 </script>
 
