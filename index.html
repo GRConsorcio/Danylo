@@ -1,118 +1,236 @@
-
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking — Equipe Danylo</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; background: #111; }
-body { display: flex; flex-direction: column; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:#0a0a0a;}
+body{font-family:"Barlow",sans-serif;display:flex;flex-direction:column;}
 
-/* ---- CSS vars driven by JS ---- */
-:root {
-  --fs-header-title: 2.2vh;
-  --fs-header-sub: 2vh;
-  --fs-header-logo: 1.4vh;
-  --fs-th: 1.5vh;
-  --fs-td: 1.8vh;
-  --fs-td-name: 2vh;
-  --fs-total: 2vh;
-  --fs-input: 1.7vh;
-  --fs-badge: 1.2vh;
-  --pad-cell: 0.8vh 0.8vw;
-  --input-w: 5vw;
-  --logo-size: 5vh;
+:root{
+  --black:#0a0a0a;
+  --surface:#111111;
+  --surface2:#1a1a1a;
+  --surface3:#222222;
+  --gold:#c9a84c;
+  --gold2:#e8c86a;
+  --gold3:#a8872e;
+  --gold-dim:#7a5f1a;
+  --gold-glow:rgba(201,168,76,0.15);
+  --white:#ffffff;
+  --row-odd:#1e1e1e;
+  --row-even:#161616;
 }
 
-.container { background: #111; height: 100vh; padding: 1.2vh 1.5vw; font-family: Arial, sans-serif; display: flex; flex-direction: column; }
-.header { text-align: center; margin-bottom: 1vh; position: relative; flex-shrink: 0; }
-.logo-area { display: flex; align-items: center; justify-content: center; gap: 1vw; margin-bottom: 0.4vh; }
-.logo-img { width: var(--logo-size); height: var(--logo-size); object-fit: contain; border-radius: 4px; }
-.logo-text { font-size: var(--fs-header-logo); color: #888; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
-.title { font-size: var(--fs-header-title); font-weight: 700; color: #C9A84C; letter-spacing: 1px; }
-.subtitle { font-size: var(--fs-header-sub); color: #777; margin-top: 2px; letter-spacing: 1px; }
-.gold-line { width: 80px; height: 2px; background: linear-gradient(90deg, transparent, #C9A84C, transparent); margin: 0.6vh auto; }
-.admin-btn { position: absolute; top: 0; right: 0; background: transparent; border: 1px solid #333; color: #777; padding: 0.5vh 1vw; border-radius: 4px; cursor: pointer; font-size: var(--fs-badge); letter-spacing: 1px; transition: all 0.2s; }
-.admin-btn:hover { border-color: #C9A84C; color: #C9A84C; }
-.sync-badge { position: absolute; top: 0; left: 0; font-size: var(--fs-badge); padding: 0.5vh 0.8vw; border-radius: 4px; letter-spacing: 1px; background: #1a1a1a; border: 1px solid #333; color: #555; }
-.sync-badge.ok { border-color: #1a5c2a; color: #2ecc71; }
-.sync-badge.err { border-color: #5c1a1a; color: #e74c3c; }
+/* LAYOUT */
+.screen{height:100vh;display:flex;flex-direction:column;padding:0.6vh 0.8vw;gap:0.6vh;}
 
-#tableWrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-table { width: 100%; height: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 1px solid #333; table-layout: fixed; }
-thead tr { background: #000; }
-thead th { padding: var(--pad-cell); color: #C9A84C; font-size: var(--fs-th); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #C9A84C44; text-align: center; white-space: nowrap; }
-thead th:first-child { text-align: left; padding-left: 1.2vw; width: 28%; }
-tbody tr { border-bottom: 1px solid #2a2a2a; transition: background 0.2s; }
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: #222; }
-tbody td { padding: var(--pad-cell); text-align: center; color: #ddd; font-size: var(--fs-td); }
-tbody td:first-child { text-align: left; padding-left: 1.2vw; font-weight: 500; color: #fff; font-size: var(--fs-td-name); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.total-cell { color: #C9A84C; font-weight: 700; font-size: var(--fs-total); }
-input[type=number] { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 0.3vh 0.3vw; width: var(--input-w); text-align: center; border-radius: 4px; font-size: var(--fs-input); }
-input[type=number]:focus { outline: none; border-color: #C9A84C; }
-input[type=number]::-webkit-inner-spin-button { opacity: 0.3; }
-.rank-1 td:first-child::before { content: "🥇 "; }
-.rank-2 td:first-child::before { content: "🥈 "; }
-.rank-3 td:first-child::before { content: "🥉 "; }
-tfoot tr { background: #000; border-top: 1px solid #C9A84C44; }
-tfoot td { padding: var(--pad-cell); color: #C9A84C; font-weight: 700; font-size: var(--fs-th); text-align: center; }
-tfoot td:first-child { text-align: left; padding-left: 1.2vw; letter-spacing: 1px; }
+/* HEADER */
+.header{background:linear-gradient(90deg,#1a1400,#2a1e00,#1a1400);border:1px solid var(--gold3);padding:0.7vh 1.5vw;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;}
+.header::after{content:"";position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);}
+.header-title{font-family:"Barlow Condensed",sans-serif;font-size:3.2vh;font-weight:900;color:var(--gold2);letter-spacing:0.1em;text-transform:uppercase;text-shadow:0 0 20px rgba(201,168,76,0.5);}
+.admin-btn{position:absolute;right:1vw;top:50%;transform:translateY(-50%);background:rgba(201,168,76,0.08);border:1px solid var(--gold-dim);color:var(--gold);padding:0.4vh 1vw;border-radius:4px;cursor:pointer;font-family:"Barlow",sans-serif;font-size:1.4vh;font-weight:600;letter-spacing:1px;transition:all 0.2s;}
+.admin-btn:hover{background:rgba(201,168,76,0.18);border-color:var(--gold);}
+.sync-badge{position:absolute;left:1vw;top:50%;transform:translateY(-50%);font-size:1.2vh;padding:0.3vh 0.7vw;border-radius:4px;background:rgba(0,0,0,0.4);border:1px solid #333;color:#555;font-weight:600;letter-spacing:1px;}
+.sync-badge.ok{color:#4ade80;border-color:rgba(74,222,128,0.3);}
+.sync-badge.err{color:#f87171;border-color:rgba(248,113,113,0.3);}
 
-/* ---- popup (mantém px pois é overlay fixo) ---- */
-.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
-.overlay.open { display: flex; }
-.popup { background: #1a1a1a; border: 1px solid #C9A84C44; border-radius: 12px; width: 90%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 28px 24px; position: relative; }
-.popup h2 { color: #C9A84C; font-size: 16px; font-weight: 700; letter-spacing: 1px; margin-bottom: 20px; text-align: center; border-bottom: 1px solid #333; padding-bottom: 14px; }
-.close-btn { position: absolute; top: 16px; right: 18px; background: none; border: none; color: #666; font-size: 20px; cursor: pointer; line-height: 1; }
-.close-btn:hover { color: #C9A84C; }
-.section-label { font-size: 11px; color: #888; letter-spacing: 2px; text-transform: uppercase; margin: 18px 0 10px; }
-.field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.field-row input[type=text] { flex: 1; background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; }
-.field-row input[type=text]:focus { outline: none; border-color: #C9A84C; }
-.del-btn { background: none; border: 1px solid #444; color: #666; width: 30px; height: 30px; border-radius: 4px; cursor: pointer; font-size: 16px; flex-shrink: 0; }
-.del-btn:hover { border-color: #c0392b; color: #c0392b; }
-.add-btn { background: none; border: 1px dashed #444; color: #888; padding: 8px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 4px; transition: all 0.2s; }
-.add-btn:hover { border-color: #C9A84C; color: #C9A84C; }
-.save-btn { background: #C9A84C; border: none; color: #000; padding: 10px 24px; border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; letter-spacing: 1px; }
-.save-btn:hover { background: #e0bc5a; }
-.input-full { width: 100%; background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 14px; margin-bottom: 8px; }
-.input-full:focus { outline: none; border-color: #C9A84C; }
-.semanas-row { display: flex; align-items: center; gap: 12px; }
-.semanas-row input[type=number] { width: 60px; background: #111; font-size: 14px; padding: 6px 8px; }
-.loading { text-align: center; color: #555; padding: 40px; font-size: 14px; letter-spacing: 1px; }
+/* BODY */
+.body{flex:1;display:flex;gap:0.8vw;min-height:0;}
+
+/* LEFT PANEL */
+.left-panel{width:28%;display:flex;flex-direction:column;gap:0.7vh;flex-shrink:0;}
+
+.stat-box{background:var(--surface);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:1.2vh 1.2vw;flex:1;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;}
+.stat-box::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold3),var(--gold2),var(--gold3),transparent);}
+.stat-box::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at top left,rgba(201,168,76,0.06) 0%,transparent 60%);}
+.stat-label{font-family:"Barlow Condensed",sans-serif;font-size:2.4vh;font-weight:700;color:var(--white);letter-spacing:0.05em;text-transform:uppercase;line-height:1.1;position:relative;z-index:1;}
+.stat-sub{font-size:1.5vh;color:rgba(255,255,255,0.45);font-weight:400;text-transform:uppercase;letter-spacing:0.08em;position:relative;z-index:1;}
+.stat-number{font-family:"Barlow Condensed",sans-serif;font-size:9vh;font-weight:900;color:var(--gold2);line-height:1;text-align:right;text-shadow:0 0 30px rgba(201,168,76,0.4);position:relative;z-index:1;}
+.stat-number.big{font-size:11vh;}
+
+/* PROGRESS BAR */
+.progress-wrap{margin-top:0.5vh;position:relative;z-index:1;}
+.progress-track{height:1.4vh;background:rgba(0,0,0,0.5);border-radius:20px;overflow:hidden;margin-bottom:0.4vh;border:1px solid rgba(201,168,76,0.15);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));border-radius:20px;transition:width 0.8s ease;position:relative;}
+.progress-fill::after{content:"";position:absolute;right:0;top:0;bottom:0;width:6px;background:rgba(255,255,255,0.35);border-radius:0 20px 20px 0;}
+.progress-meta{font-size:1.3vh;color:var(--gold);font-weight:600;letter-spacing:0.05em;}
+.progress-pct{font-size:1.2vh;color:rgba(201,168,76,0.6);text-align:right;}
+
+/* CONVERSION */
+.conv-number{font-family:"Barlow Condensed",sans-serif;font-size:8vh;font-weight:900;color:var(--gold2);line-height:1;text-align:right;text-shadow:0 0 30px rgba(201,168,76,0.4);position:relative;z-index:1;}
+.conv-unit{font-size:3vh;font-weight:700;vertical-align:super;margin-left:2px;color:var(--gold);}
+
+/* META INPUT */
+.meta-row{display:flex;align-items:center;gap:6px;margin-top:0.5vh;position:relative;z-index:1;}
+.meta-row label{font-size:1.2vh;color:rgba(201,168,76,0.6);text-transform:uppercase;letter-spacing:0.07em;}
+.meta-input{background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--gold2);padding:0.3vh 0.5vw;border-radius:4px;font-size:1.4vh;width:5vw;text-align:center;font-family:"Barlow",sans-serif;font-weight:600;}
+.meta-input:focus{outline:none;border-color:var(--gold);}
+
+/* RIGHT TABLE */
+.right-panel{flex:1;display:flex;flex-direction:column;min-width:0;}
+.table-wrap{flex:1;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(201,168,76,0.15);}
+table{width:100%;border-collapse:collapse;table-layout:fixed;height:100%;}
+
+thead tr{background:#0d0d00;}
+thead th{padding:var(--th-pad, 0.8vh 0.5vw);color:var(--gold2);font-family:"Barlow Condensed",sans-serif;font-size:var(--fs-th,1.8vh);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-align:center;border:1px solid rgba(201,168,76,0.15);background:#0e0e00;}
+thead th:first-child{text-align:left;padding-left:1vw;width:34%;}
+thead th.col-total{background:#1a1400;color:var(--gold2);}
+
+tbody tr:nth-child(odd) td{background:var(--row-odd);}
+tbody tr:nth-child(even) td{background:var(--row-even);}
+tbody tr:hover td{background:#2a2200 !important;}
+tbody td{padding:var(--td-pad, 0.5vh 0.5vw);color:var(--white);font-size:var(--fs-td,2vh);text-align:center;border:1px solid rgba(201,168,76,0.08);font-weight:600;}
+tbody td:first-child{text-align:left;padding-left:1vw;font-family:"Barlow Condensed",sans-serif;font-size:var(--fs-name,2.1vh);font-weight:700;text-transform:uppercase;letter-spacing:0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white);}
+td.col-total{background:#1a1400 !important;color:var(--gold2) !important;font-family:"Barlow Condensed",sans-serif;font-size:var(--fs-total,2.2vh);font-weight:900;border-left:1px solid rgba(201,168,76,0.3);}
+
+/* RANK MEDALS */
+.rank-medal{display:inline-block;margin-right:4px;}
+
+tfoot tr td{background:#0d0d00 !important;color:var(--gold);font-family:"Barlow Condensed",sans-serif;font-size:var(--fs-th,1.8vh);font-weight:800;text-align:center;border:1px solid rgba(201,168,76,0.15);padding:var(--th-pad, 0.8vh 0.5vw);text-transform:uppercase;letter-spacing:0.08em;}
+tfoot tr td:first-child{text-align:left;padding-left:1vw;}
+tfoot td.col-total{background:#1a1400 !important;color:var(--gold2) !important;font-size:var(--fs-total,2.2vh);}
+
+/* number inputs inside cells */
+input[type=number]{background:rgba(0,0,0,0.45);border:1px solid rgba(201,168,76,0.25);color:var(--gold2);width:var(--input-w,4.5vh);padding:0.2vh 0.2vw;text-align:center;border-radius:3px;font-size:var(--fs-td,2vh);font-weight:700;font-family:"Barlow",sans-serif;}
+input[type=number]:focus{outline:none;border-color:var(--gold);}
+input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
+
+.loading{text-align:center;color:rgba(201,168,76,0.4);padding:40px;font-size:1.6vh;letter-spacing:2px;font-family:"Barlow Condensed",sans-serif;}
+
+/* OVERLAY / POPUP */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:100;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.popup{background:#111100;border:1px solid rgba(201,168,76,0.25);border-radius:12px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;padding:28px 24px;position:relative;}
+.popup h2{color:var(--gold2);font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;text-align:center;border-bottom:1px solid rgba(201,168,76,0.15);padding-bottom:14px;}
+.close-btn{position:absolute;top:16px;right:18px;background:none;border:none;color:#666;font-size:20px;cursor:pointer;}
+.close-btn:hover{color:var(--gold2);}
+.section-label{font-size:11px;color:rgba(201,168,76,0.5);letter-spacing:2px;text-transform:uppercase;margin:16px 0 8px;font-family:"Barlow",sans-serif;}
+.field-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.field-row input[type=text]{flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:#fff;padding:8px 12px;border-radius:4px;font-size:14px;font-family:"Barlow",sans-serif;}
+.field-row input[type=text]:focus{outline:none;border-color:var(--gold);}
+.del-btn{background:none;border:1px solid #333;color:#666;width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:16px;flex-shrink:0;}
+.del-btn:hover{border-color:#c0392b;color:#c0392b;}
+.add-btn{background:none;border:1px dashed rgba(201,168,76,0.2);color:rgba(201,168,76,0.5);padding:8px;width:100%;border-radius:4px;cursor:pointer;font-size:13px;margin-top:4px;transition:all 0.2s;font-family:"Barlow",sans-serif;}
+.add-btn:hover{border-color:var(--gold);color:var(--gold);}
+.save-btn{background:linear-gradient(90deg,var(--gold3),var(--gold2));border:none;color:#000;padding:10px 24px;border-radius:4px;font-size:15px;font-weight:800;cursor:pointer;width:100%;margin-top:20px;letter-spacing:2px;font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;}
+.save-btn:hover{background:var(--gold2);}
+.input-full{width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:#fff;padding:8px 12px;border-radius:4px;font-size:14px;margin-bottom:8px;font-family:"Barlow",sans-serif;}
+.input-full:focus{outline:none;border-color:var(--gold);}
+.semanas-row{display:flex;align-items:center;gap:12px;}
+.semanas-row input[type=number]{width:60px;background:rgba(0,0,0,0.4);font-size:14px;padding:6px 8px;border:1px solid rgba(201,168,76,0.2);color:#fff;}
+.zoom-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.zoom-btn{background:none;border:1px solid rgba(201,168,76,0.2);color:var(--gold);width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:18px;line-height:1;}
+.zoom-btn:hover{border-color:var(--gold);background:rgba(201,168,76,0.1);}
+#zoom-label{color:#aaa;font-size:13px;min-width:44px;text-align:center;letter-spacing:1px;}
 </style>
+</head>
+<body>
 
-<div class="container">
+<div class="screen">
+
+  <!-- HEADER -->
   <div class="header">
     <div class="sync-badge" id="syncBadge">● CONECTANDO</div>
+    <div class="header-title" id="headerTitle">EQUIPE DANYLO</div>
     <button class="admin-btn" onclick="abrirAdmin()">⚙ ADMIN</button>
-    <div class="logo-area">
-      <img class="logo-img" src="/mnt/user-data/uploads/gr_logo.jpeg" onerror="this.style.display='none'" />
-      <div>
-        <div class="logo-text">GR Consórcio</div>
-        <div class="title">Equipe Danylo</div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+
+      <!-- VENDAS DO DIA -->
+      <div class="stat-box">
+        <div>
+          <div class="stat-label">Vendas</div>
+          <div class="stat-sub">Do dia</div>
+        </div>
+        <div class="stat-number big" id="stat-dia">–</div>
+      </div>
+
+      <!-- VENDAS DO MÊS + META -->
+      <div class="stat-box" style="flex:1.6">
+        <div>
+          <div class="stat-label">Vendas</div>
+          <div class="stat-sub">No mês</div>
+        </div>
+        <div class="stat-number" id="stat-mes">–</div>
+        <div class="progress-wrap">
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="progress-meta" id="progress-meta">Meta: – cotas.</div>
+            <div class="progress-pct" id="progress-pct">0%</div>
+          </div>
+          <div class="meta-row">
+            <label>Meta:</label>
+            <input type="number" class="meta-input" id="meta-input" min="1" value="100" onchange="salvarMeta()" />
+            <label>cotas</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONVERSÃO -->
+      <div class="stat-box">
+        <div>
+          <div class="stat-label">Taxa de conversão</div>
+          <div class="stat-sub">Da equipe</div>
+        </div>
+        <div style="text-align:right">
+          <span class="conv-number" id="stat-conv">–</span><span class="conv-unit">%</span>
+        </div>
+      </div>
+
+    </div><!-- /left-panel -->
+
+    <!-- RIGHT TABLE -->
+    <div class="right-panel">
+      <div class="table-wrap" id="tableWrap">
+        <div class="loading">● CONECTANDO AO BANCO DE DADOS...</div>
       </div>
     </div>
-    <div class="gold-line"></div>
-    <div class="subtitle" id="subtitulo">Carregando...</div>
-  </div>
-  <div id="tableWrap"><div class="loading">Conectando ao banco de dados...</div></div>
-</div><!-- /container -->
 
+  </div><!-- /body -->
+</div><!-- /screen -->
+
+<!-- ADMIN OVERLAY -->
 <div class="overlay" id="overlay" onclick="fecharAdmin(event)">
   <div class="popup" id="popup">
     <button class="close-btn" onclick="fecharAdmin(null,true)">✕</button>
-    <h2>⚙ PAINEL ADMIN</h2>
+    <h2>⚙ Painel Admin</h2>
+
     <div class="section-label">Zoom da tela</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-      <button onclick="changeZoom(-0.1)" style="background:none;border:1px solid #444;color:#C9A84C;width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:18px;line-height:1;">−</button>
-      <span id="zoom-label" style="color:#aaa;font-size:13px;min-width:40px;text-align:center;letter-spacing:1px;">80%</span>
-      <button onclick="changeZoom(0.1)" style="background:none;border:1px solid #444;color:#C9A84C;width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:18px;line-height:1;">+</button>
+    <div class="zoom-row">
+      <button class="zoom-btn" onclick="changeZoom(-0.1)">−</button>
+      <span id="zoom-label">100%</span>
+      <button class="zoom-btn" onclick="changeZoom(0.1)">+</button>
     </div>
-    <div class="section-label">Nome do mês / período</div>
+
+    <div class="section-label">Nome da equipe</div>
+    <input class="input-full" type="text" id="admin-equipe" placeholder="Ex: Equipe Danylo" />
+
+    <div class="section-label">Período / mês</div>
     <input class="input-full" type="text" id="admin-mes" placeholder="Ex: Abril 2025" />
+
+    <div class="section-label">Vendas do dia</div>
+    <input class="input-full" type="number" id="admin-dia" min="0" placeholder="Ex: 6" />
+
+    <div class="section-label">Taxa de conversão (%)</div>
+    <input class="input-full" type="number" id="admin-conv" min="0" step="0.01" placeholder="Ex: 2.24" />
+
     <div class="section-label">Número de semanas</div>
     <div class="semanas-row">
-      <input type="number" id="admin-semanas" min="1" max="8" value="4" style="width:60px;background:#111;" />
-      <span style="color:#777;font-size:13px;">semanas (máx. 8)</span>
+      <input type="number" id="admin-semanas" min="1" max="8" value="4" />
+      <span style="color:rgba(255,255,255,0.5);font-size:13px">semanas (máx. 8)</span>
     </div>
+
     <div class="section-label">Vendedores</div>
     <div id="admin-vendedores"></div>
     <button class="add-btn" onclick="addVendedorAdmin()">+ Adicionar vendedor</button>
@@ -121,206 +239,224 @@ tfoot td:first-child { text-align: left; padding-left: 1.2vw; letter-spacing: 1p
 </div>
 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getDatabase,ref,onValue,set}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCX7ocMbAK95WIKlTR-qSUojxEhDwb1mCo",
-  authDomain: "homegr-71157.firebaseapp.com",
-  projectId: "homegr-71157",
-  storageBucket: "homegr-71157.firebasestorage.app",
-  messagingSenderId: "353566889780",
-  appId: "1:353566889780:web:aa363de0a0c3986a243761",
-  measurementId: "G-MEFB6WRY5V",
-  databaseURL: "https://homegr-71157-default-rtdb.firebaseio.com"
+const firebaseConfig={
+  apiKey:"AIzaSyCX7ocMbAK95WIKlTR-qSUojxEhDwb1mCo",
+  authDomain:"homegr-71157.firebaseapp.com",
+  projectId:"homegr-71157",
+  storageBucket:"homegr-71157.firebasestorage.app",
+  messagingSenderId:"353566889780",
+  appId:"1:353566889780:web:aa363de0a0c3986a243761",
+  measurementId:"G-MEFB6WRY5V",
+  databaseURL:"https://homegr-71157-default-rtdb.firebaseio.com"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const dbRef = ref(db, 'equipe_danylo');
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const dbRef=ref(db,'equipe_danylo');
+const badge=document.getElementById('syncBadge');
 
-const badge = document.getElementById('syncBadge');
-let config = { mes: "Controle de vendas mensal", semanas: 4, vendedores: ["Vendedor 1","Vendedor 2","Vendedor 3"] };
-let dados = [];
-let ignoreNext = false;
+let config={
+  equipe:"Equipe Danylo",
+  mes:"Controle de vendas mensal",
+  semanas:4,
+  meta:100,
+  vendas_dia:0,
+  conversao:0,
+  vendedores:["Vendedor 1","Vendedor 2","Vendedor 3"]
+};
+let dados=[];
 
-function setSyncOk() { badge.textContent = '● SINCRONIZADO'; badge.className = 'sync-badge ok'; }
-function setSyncErr() { badge.textContent = '● OFFLINE'; badge.className = 'sync-badge err'; }
-function setSyncSaving() { badge.textContent = '● SALVANDO'; badge.className = 'sync-badge'; }
+function setSyncOk(){badge.textContent='● SINCRONIZADO';badge.className='sync-badge ok';}
+function setSyncErr(){badge.textContent='● OFFLINE';badge.className='sync-badge err';}
+function setSyncSaving(){badge.textContent='● SALVANDO';badge.className='sync-badge';}
 
-function render() {
-  document.getElementById('subtitulo').textContent = config.mes;
-  const wrap = document.getElementById('tableWrap');
+function render(){
+  // Header
+  document.getElementById('headerTitle').textContent=(config.equipe||"Equipe").toUpperCase()+" — "+config.mes;
 
-  const sorted = [...dados].sort((a,b) => b.s.reduce((x,y)=>x+y,0) - a.s.reduce((x,y)=>x+y,0));
-  const totS = Array(config.semanas).fill(0);
+  // Left panel stats
+  const totalMes=dados.reduce((s,v)=>s+v.s.reduce((a,b)=>a+b,0),0);
+  const meta=config.meta||100;
+  const pct=Math.min(100,Math.round(totalMes/meta*100));
 
-  let ths = '<thead><tr><th>Vendedor</th>';
-  for(let i=0;i<config.semanas;i++) ths += `<th>Semana ${i+1}</th>`;
-  ths += '<th>Total</th></tr></thead>';
+  document.getElementById('stat-dia').textContent=config.vendas_dia??0;
+  document.getElementById('stat-mes').textContent=totalMes;
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-meta').textContent='Meta do mês '+meta+' cotas.';
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('meta-input').value=meta;
 
-  let trs = '';
-  sorted.forEach((v, idx) => {
-    const total = v.s.reduce((a,b)=>a+b,0);
-    v.s.forEach((val,i) => { if(i<config.semanas) totS[i]+=val; });
-    let cls = idx===0&&total>0?'rank-1':idx===1&&total>0?'rank-2':idx===2&&total>0?'rank-3':'';
-    let cells = `<td>${v.nome}</td>`;
-    for(let si=0;si<config.semanas;si++) {
-      cells += `<td><input type="number" min="0" value="${v.s[si]||0}" data-nome="${v.nome}" data-s="${si}" /></td>`;
+  const conv=parseFloat(config.conversao)||0;
+  document.getElementById('stat-conv').textContent=conv.toFixed(2).replace('.',',');
+
+  // Table
+  const wrap=document.getElementById('tableWrap');
+  const sorted=[...dados].sort((a,b)=>b.s.reduce((x,y)=>x+y,0)-a.s.reduce((x,y)=>x+y,0));
+  const totS=Array(config.semanas).fill(0);
+  const medals=['🥇','🥈','🥉'];
+
+  let ths='<thead><tr><th>Vendedor(a)</th>';
+  for(let i=0;i<config.semanas;i++)ths+=`<th>Semana ${i+1}</th>`;
+  ths+='<th class="col-total">Total</th></tr></thead>';
+
+  let trs='';
+  sorted.forEach((v,idx)=>{
+    const total=v.s.reduce((a,b)=>a+b,0);
+    v.s.forEach((val,i)=>{if(i<config.semanas)totS[i]+=val;});
+    const medal=total>0&&idx<3?`<span class="rank-medal">${medals[idx]}</span>`:'';
+    let cells=`<td>${medal}${v.nome}</td>`;
+    for(let si=0;si<config.semanas;si++){
+      cells+=`<td><input type="number" min="0" value="${v.s[si]||0}" data-nome="${v.nome}" data-s="${si}"/></td>`;
     }
-    cells += `<td class="total-cell">${total}</td>`;
-    trs += `<tr class="${cls}">${cells}</tr>`;
+    cells+=`<td class="col-total">${total}</td>`;
+    trs+=`<tr>${cells}</tr>`;
   });
 
-  let ftds = '<tr><td>Total equipe</td>';
+  let ftds='<tr><td>TOTAL</td>';
   let gt=0;
   for(let i=0;i<config.semanas;i++){ftds+=`<td>${totS[i]}</td>`;gt+=totS[i];}
-  ftds+=`<td class="total-cell">${gt}</td></tr>`;
+  ftds+=`<td class="col-total">${gt}</td></tr>`;
 
-  wrap.innerHTML = `<table>${ths}<tbody id="tbody">${trs}</tbody><tfoot>${ftds}</tfoot></table>`;
+  wrap.innerHTML=`<table>${ths}<tbody id="tbody">${trs}</tbody><tfoot>${ftds}</tfoot></table>`;
 
-  // Atualiza tamanho das fontes proporcional ao número de linhas
-  if(window._setNumVendedores) window._setNumVendedores(sorted.length);
+  if(window._setNumVendedores)window._setNumVendedores(sorted.length);
 
-  document.querySelectorAll('#tbody input').forEach(inp => {
-    inp.addEventListener('change', e => {
-      const nome = e.target.dataset.nome;
-      const si = parseInt(e.target.dataset.s);
-      const v = dados.find(x=>x.nome===nome);
-      if(!v) return;
-      v.s[si] = parseInt(e.target.value)||0;
+  document.querySelectorAll('#tbody input').forEach(inp=>{
+    inp.addEventListener('change',e=>{
+      const nome=e.target.dataset.nome;
+      const si=parseInt(e.target.dataset.s);
+      const v=dados.find(x=>x.nome===nome);
+      if(!v)return;
+      v.s[si]=parseInt(e.target.value)||0;
       render();
       setSyncSaving();
-      const path = `equipe_danylo/dados/${nome.replace(/[.#$\[\]]/g,'_')}/s`;
-      set(ref(db, path), v.s).then(setSyncOk).catch(setSyncErr);
+      const path=`equipe_danylo/dados/${nome.replace(/[.#$\[\]]/g,'_')}/s`;
+      set(ref(db,path),v.s).then(setSyncOk).catch(setSyncErr);
     });
   });
 }
 
-onValue(dbRef, snap => {
-  const val = snap.val();
-  if(val) {
-    if(val.config) config = val.config;
-    if(val.dados) {
-      dados = Object.entries(val.dados).map(([key, d]) => ({
-        nome: d.nome || key,
-        s: Array.isArray(d.s) ? d.s : Array(config.semanas).fill(0)
+onValue(dbRef,snap=>{
+  const val=snap.val();
+  if(val){
+    if(val.config)config={...config,...val.config};
+    if(val.dados){
+      dados=Object.entries(val.dados).map(([key,d])=>({
+        nome:d.nome||key,
+        s:Array.isArray(d.s)?d.s:Array(config.semanas).fill(0)
       }));
-    } else {
-      dados = config.vendedores.map(n => ({ nome: n, s: Array(config.semanas).fill(0) }));
+    }else{
+      dados=config.vendedores.map(n=>({nome:n,s:Array(config.semanas).fill(0)}));
     }
-  } else {
-    dados = config.vendedores.map(n => ({ nome: n, s: Array(config.semanas).fill(0) }));
-    set(dbRef, { config, dados: Object.fromEntries(dados.map(d=>([d.nome.replace(/[.#$\[\]]/g,'_'),d]))) });
+  }else{
+    dados=config.vendedores.map(n=>({nome:n,s:Array(config.semanas).fill(0)}));
+    set(dbRef,{config,dados:Object.fromEntries(dados.map(d=>[d.nome.replace(/[.#$\[\]]/g,'_'),d]))});
   }
-  render();
-  setSyncOk();
-}, err => { setSyncErr(); });
+  render();setSyncOk();
+},()=>setSyncErr());
 
-window.abrirAdmin = function() {
-  document.getElementById('admin-mes').value = config.mes;
-  document.getElementById('admin-semanas').value = config.semanas;
-  const cont = document.getElementById('admin-vendedores');
-  cont.innerHTML = '';
-  config.vendedores.forEach((n, i) => {
-    const row = document.createElement('div');
-    row.className = 'field-row';
-    row.innerHTML = `<input type="text" value="${n}" data-idx="${i}" placeholder="Nome do vendedor" /><button class="del-btn" onclick="removerVendedor(${i})">✕</button>`;
+window.salvarMeta=function(){
+  config.meta=Math.max(1,parseInt(document.getElementById('meta-input').value)||100);
+  render();setSyncSaving();
+  set(ref(db,'equipe_danylo/config'),config).then(()=>{setSyncOk();}).catch(setSyncErr);
+};
+
+window.abrirAdmin=function(){
+  document.getElementById('admin-equipe').value=config.equipe||'';
+  document.getElementById('admin-mes').value=config.mes||'';
+  document.getElementById('admin-dia').value=config.vendas_dia??0;
+  document.getElementById('admin-conv').value=config.conversao??0;
+  document.getElementById('admin-semanas').value=config.semanas;
+  const cont=document.getElementById('admin-vendedores');
+  cont.innerHTML='';
+  config.vendedores.forEach((n,i)=>{
+    const row=document.createElement('div');
+    row.className='field-row';
+    row.innerHTML=`<input type="text" value="${n}" data-idx="${i}" placeholder="Nome do vendedor"/><button class="del-btn" onclick="removerVendedor(${i})">✕</button>`;
     cont.appendChild(row);
   });
   document.getElementById('overlay').classList.add('open');
 };
 
-window.fecharAdmin = function(e, force) {
-  if(force || (e && e.target===document.getElementById('overlay'))) {
+window.fecharAdmin=function(e,force){
+  if(force||(e&&e.target===document.getElementById('overlay'))){
     document.getElementById('overlay').classList.remove('open');
   }
 };
 
-window.addVendedorAdmin = function() {
-  const inputs = document.querySelectorAll('#admin-vendedores input[type=text]');
-  inputs.forEach((inp, i) => { if(config.vendedores[i] !== undefined) config.vendedores[i] = inp.value.trim() || config.vendedores[i]; });
+window.addVendedorAdmin=function(){
+  const inputs=document.querySelectorAll('#admin-vendedores input[type=text]');
+  inputs.forEach((inp,i)=>{if(config.vendedores[i]!==undefined)config.vendedores[i]=inp.value.trim()||config.vendedores[i];});
   config.vendedores.push("Novo Vendedor");
-  dados.push({ nome: "Novo Vendedor", s: Array(config.semanas).fill(0) });
+  dados.push({nome:"Novo Vendedor",s:Array(config.semanas).fill(0)});
   window.abrirAdmin();
 };
 
-window.removerVendedor = function(idx) {
-  if(config.vendedores.length<=1) return;
-  const inputs = document.querySelectorAll('#admin-vendedores input[type=text]');
-  inputs.forEach((inp, i) => { if(config.vendedores[i] !== undefined) config.vendedores[i] = inp.value.trim() || config.vendedores[i]; });
-  const nome = config.vendedores[idx];
+window.removerVendedor=function(idx){
+  if(config.vendedores.length<=1)return;
+  const inputs=document.querySelectorAll('#admin-vendedores input[type=text]');
+  inputs.forEach((inp,i)=>{if(config.vendedores[i]!==undefined)config.vendedores[i]=inp.value.trim()||config.vendedores[i];});
+  const nome=config.vendedores[idx];
   config.vendedores.splice(idx,1);
-  dados = dados.filter(d=>d.nome!==nome);
+  dados=dados.filter(d=>d.nome!==nome);
   window.abrirAdmin();
 };
 
-window.salvarAdmin = function() {
-  const novoMes = document.getElementById('admin-mes').value.trim() || config.mes;
-  const novasSemanas = Math.min(8, Math.max(1, parseInt(document.getElementById('admin-semanas').value)||4));
-  const inputs = document.querySelectorAll('#admin-vendedores input[type=text]');
-  const novosNomes = Array.from(inputs).map(inp => inp.value.trim() || 'Vendedor');
+window.salvarAdmin=function(){
+  const novaEquipe=document.getElementById('admin-equipe').value.trim()||config.equipe;
+  const novoMes=document.getElementById('admin-mes').value.trim()||config.mes;
+  const novoDia=parseInt(document.getElementById('admin-dia').value)||0;
+  const novaConv=parseFloat(document.getElementById('admin-conv').value)||0;
+  const novasSemanas=Math.min(8,Math.max(1,parseInt(document.getElementById('admin-semanas').value)||4));
+  const inputs=document.querySelectorAll('#admin-vendedores input[type=text]');
+  const novosNomes=Array.from(inputs).map(inp=>inp.value.trim()||'Vendedor');
 
-  const novosDados = novosNomes.map((nome, i) => {
-    const nomeAntigo = config.vendedores[i];
-    const existing = dados.find(d => d.nome === nomeAntigo) || dados.find(d => d.nome === nome);
-    const s = existing ? [...existing.s] : Array(novasSemanas).fill(0);
-    while(s.length < novasSemanas) s.push(0);
-    return { nome, s: s.slice(0, novasSemanas) };
+  const novosDados=novosNomes.map((nome,i)=>{
+    const nomeAntigo=config.vendedores[i];
+    const existing=dados.find(d=>d.nome===nomeAntigo)||dados.find(d=>d.nome===nome);
+    const s=existing?[...existing.s]:Array(novasSemanas).fill(0);
+    while(s.length<novasSemanas)s.push(0);
+    return{nome,s:s.slice(0,novasSemanas)};
   });
 
-  config.mes = novoMes;
-  config.semanas = novasSemanas;
-  config.vendedores = novosNomes;
-  dados = novosDados;
-
+  config={...config,equipe:novaEquipe,mes:novoMes,vendas_dia:novoDia,conversao:novaConv,semanas:novasSemanas,vendedores:novosNomes};
+  dados=novosDados;
   document.getElementById('overlay').classList.remove('open');
   setSyncSaving();
-
-  const dadosObj = Object.fromEntries(dados.map(d => ([d.nome.replace(/[.#$\[\]]/g,'_'), d])));
-  set(dbRef, { config, dados: dadosObj }).then(() => { setSyncOk(); render(); }).catch(setSyncErr);
+  const dadosObj=Object.fromEntries(dados.map(d=>[d.nome.replace(/[.#$\[\]]/g,'_'),d]));
+  set(dbRef,{config,dados:dadosObj}).then(()=>{setSyncOk();render();}).catch(setSyncErr);
 };
 </script>
 
 <script>
-// Zoom manual: multiplica o fator base das fontes
-let zoomFactor = 1.0;
-
-function recalcFontSizes() {
-  // Conta linhas: vendedores + 1 header + 1 footer
-  const nRows = (window._numVendedores || 10) + 2;
-  // Espaço disponível para a tabela (90% do viewport height como base)
-  const availVh = 90;
-  // Altura por linha em vh (proporcional ao número de linhas)
-  const rowVh = (availVh / nRows) * zoomFactor;
-
-  const r = document.documentElement;
-  r.style.setProperty('--fs-td',        Math.max(0.8, rowVh * 0.42) + 'vh');
-  r.style.setProperty('--fs-td-name',   Math.max(0.9, rowVh * 0.46) + 'vh');
-  r.style.setProperty('--fs-total',     Math.max(0.9, rowVh * 0.46) + 'vh');
-  r.style.setProperty('--fs-input',     Math.max(0.8, rowVh * 0.40) + 'vh');
-  r.style.setProperty('--fs-th',        Math.max(0.7, rowVh * 0.36) + 'vh');
-  r.style.setProperty('--fs-header-title', Math.max(1.0, rowVh * 0.52) + 'vh');
-  r.style.setProperty('--fs-header-sub',   Math.max(0.9, rowVh * 0.46) + 'vh');
-  r.style.setProperty('--fs-header-logo',  Math.max(0.7, rowVh * 0.32) + 'vh');
-  r.style.setProperty('--fs-badge',        Math.max(0.6, rowVh * 0.28) + 'vh');
-  r.style.setProperty('--pad-cell',        Math.max(0.2, rowVh * 0.18) + 'vh 0.8vw');
-  r.style.setProperty('--input-w',         Math.max(3, rowVh * 1.2) + 'vh');
-  r.style.setProperty('--logo-size',       Math.max(2, rowVh * 1.1) + 'vh');
-  document.getElementById('zoom-label').textContent = Math.round(zoomFactor * 100) + '%';
+let zoomFactor=1.0;
+function recalcFontSizes(){
+  const nRows=(window._numVendedores||10)+2;
+  const availVh=82;
+  const rowVh=(availVh/nRows)*zoomFactor;
+  const r=document.documentElement;
+  r.style.setProperty('--fs-td',        Math.max(0.9,rowVh*0.44)+'vh');
+  r.style.setProperty('--fs-name',      Math.max(1.0,rowVh*0.48)+'vh');
+  r.style.setProperty('--fs-total',     Math.max(1.0,rowVh*0.50)+'vh');
+  r.style.setProperty('--fs-th',        Math.max(0.8,rowVh*0.40)+'vh');
+  r.style.setProperty('--input-w',      Math.max(3.5,rowVh*1.3)+'vh');
+  r.style.setProperty('--td-pad',       Math.max(0.2,rowVh*0.16)+'vh 0.5vw');
+  r.style.setProperty('--th-pad',       Math.max(0.3,rowVh*0.22)+'vh 0.5vw');
+  document.getElementById('zoom-label').textContent=Math.round(zoomFactor*100)+'%';
 }
-
-window.changeZoom = function(delta) {
-  zoomFactor = Math.min(2.0, Math.max(0.4, zoomFactor + delta));
+window.changeZoom=function(delta){
+  zoomFactor=Math.min(2.0,Math.max(0.4,zoomFactor+delta));
   recalcFontSizes();
 };
-
-// Recalcula sempre que o número de vendedores mudar
-window._setNumVendedores = function(n) {
-  window._numVendedores = n;
+window._setNumVendedores=function(n){
+  window._numVendedores=n;
   recalcFontSizes();
 };
-
-window.addEventListener('resize', recalcFontSizes);
+window.addEventListener('resize',recalcFontSizes);
 recalcFontSizes();
 </script>
+</body>
+</html>
