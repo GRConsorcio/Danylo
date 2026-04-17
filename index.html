@@ -126,6 +126,25 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
 .zoom-btn{background:none;border:1px solid rgba(201,168,76,0.2);color:var(--gold);width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:18px;line-height:1;}
 .zoom-btn:hover{border-color:var(--gold);background:rgba(201,168,76,0.1);}
 #zoom-label{color:#aaa;font-size:13px;min-width:44px;text-align:center;letter-spacing:1px;}
+
+/* DAILY EDIT POPUP */
+.stat-dia-wrap{position:relative;z-index:1;cursor:pointer;}
+.stat-dia-wrap .stat-number{transition:text-shadow 0.2s;}
+.stat-dia-wrap:hover .stat-number{text-shadow:0 0 40px rgba(201,168,76,0.9);}
+.stat-dia-hint{font-size:1.1vh;color:rgba(201,168,76,0.4);text-align:right;margin-top:2px;letter-spacing:0.05em;font-weight:400;}
+
+.dia-popup{position:fixed;z-index:200;background:#111100;border:1px solid rgba(201,168,76,0.4);border-radius:10px;padding:16px 18px;min-width:240px;box-shadow:0 8px 40px rgba(0,0,0,0.8),0 0 20px rgba(201,168,76,0.1);display:none;}
+.dia-popup.open{display:block;}
+.dia-popup-title{font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:800;color:var(--gold2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);padding-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.dia-popup-close{background:none;border:none;color:#555;cursor:pointer;font-size:16px;line-height:1;padding:0;}
+.dia-popup-close:hover{color:var(--gold2);}
+.dia-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;}
+.dia-row:last-child{margin-bottom:0;}
+.dia-name{font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.04em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dia-controls{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.dia-btn{width:22px;height:22px;border-radius:4px;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.08);color:var(--gold2);font-size:14px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all 0.15s;font-family:"Barlow",sans-serif;}
+.dia-btn:hover{background:rgba(201,168,76,0.22);border-color:var(--gold);}
+.dia-val{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:900;color:var(--gold2);min-width:28px;text-align:center;}
 </style>
 </head>
 <body>
@@ -146,12 +165,15 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
     <div class="left-panel">
 
       <!-- VENDAS DO DIA -->
-      <div class="stat-box">
+      <div class="stat-box" id="stat-dia-box">
         <div>
           <div class="stat-label">Vendas</div>
           <div class="stat-sub">Do dia</div>
         </div>
-        <div class="stat-number big" id="stat-dia">–</div>
+        <div class="stat-dia-wrap" id="stat-dia-trigger">
+          <div class="stat-number big" id="stat-dia">–</div>
+          <div class="stat-dia-hint">✏️ clique para editar</div>
+        </div>
       </div>
 
       <!-- VENDAS DO MÊS + META -->
@@ -199,6 +221,15 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
 
   </div><!-- /body -->
 </div><!-- /screen -->
+
+<!-- DAILY EDIT POPUP -->
+<div class="dia-popup" id="dia-popup">
+  <div class="dia-popup-title">
+    <span>⭐ Cotas do dia</span>
+    <button class="dia-popup-close" id="dia-popup-close">✕</button>
+  </div>
+  <div id="dia-popup-rows"></div>
+</div>
 
 <!-- ADMIN OVERLAY -->
 <div class="overlay" id="overlay" onclick="fecharAdmin(event)">
@@ -272,6 +303,7 @@ let dados=[];
 // Guarda quanto cada vendedor tinha acumulado nas semanas no início do dia.
 // Vendas do dia = total_semanas_atual - snapshot_inicio_dia
 let snapDia={}; // { nomeKey: { data, base } }  base = total semanas no início do dia
+let cotasDia={}; // { nomeKey: { data, extra } }  extra = cotas manuais adicionadas no dia
 
 function setSyncOk(){badge.textContent='● SINCRONIZADO';badge.className='sync-badge ok';}
 function setSyncErr(){badge.textContent='● OFFLINE';badge.className='sync-badge err';}
@@ -283,19 +315,45 @@ function dataHoje(){
 }
 function nomeKey(nome){return nome.replace(/[.#$\[\]]/g,'_');}
 
-// Retorna quantas vendas um vendedor fez HOJE (total atual - base do início do dia)
+function getCotaDia(nome){
+  const k=nomeKey(nome);
+  const e=cotasDia[k];
+  return(e&&e.data===dataHoje())?e.extra||0:0;
+}
+
+function salvarCotaDia(nome,extra){
+  const k=nomeKey(nome);
+  const d=dataHoje();
+  extra=Math.max(0,extra);
+  cotasDia[k]={data:d,extra,nome};
+  setSyncSaving();
+  set(ref(db,`equipe_danylo/cotasDia/${k}`),{data:d,extra,nome})
+    .then(setSyncOk).catch(setSyncErr);
+}
+
+function inicializarCotasDia(snapVal){
+  const d=dataHoje();
+  if(!snapVal)return;
+  Object.entries(snapVal).forEach(([k,v])=>{
+    if(v.data===d) cotasDia[k]=v;
+    else cotasDia[k]={data:d,extra:0,nome:v.nome||k};
+  });
+}
+
+// Retorna quantas vendas um vendedor fez HOJE (total atual - base do início do dia + cotas manuais)
 function vendasHojeVendedor(v){
   const k=nomeKey(v.nome);
   const totalAtual=v.s.reduce((a,b)=>a+b,0);
   const entry=snapDia[k];
+  let fromSemanas=0;
   if(!entry||entry.data!==dataHoje()){
-    // Ainda não tem snapshot: registra agora
     const base=totalAtual;
     snapDia[k]={data:dataHoje(),base};
     set(ref(db,`equipe_danylo/snapDia/${k}`),{data:dataHoje(),base,nome:v.nome}).catch(()=>{});
-    return 0;
+  }else{
+    fromSemanas=Math.max(0,totalAtual-entry.base);
   }
-  return Math.max(0, totalAtual - entry.base);
+  return fromSemanas+getCotaDia(v.nome);
 }
 
 // Ao carregar: verifica snapshots antigos e renova para hoje
@@ -411,6 +469,7 @@ onValue(dbRef,snap=>{
       dados=config.vendedores.map(n=>({nome:n,s:Array(config.semanas).fill(0)}));
     }
     inicializarSnapDia(val.snapDia||null);
+    inicializarCotasDia(val.cotasDia||null);
   }else{
     dados=config.vendedores.map(n=>({nome:n,s:Array(config.semanas).fill(0)}));
     set(dbRef,{config,dados:Object.fromEntries(dados.map(d=>[nomeKey(d.nome),d]))});
@@ -420,6 +479,77 @@ onValue(dbRef,snap=>{
 },()=>setSyncErr());
 
 agendarResetMeiaNoite();
+
+// ─── POPUP COTAS DO DIA ────────────────────────────────────────────────────
+function abrirDiaPopup(){
+  const popup=document.getElementById('dia-popup');
+  const rows=document.getElementById('dia-popup-rows');
+  const trigger=document.getElementById('stat-dia-box');
+  const rect=trigger.getBoundingClientRect();
+
+  // Posiciona o popup à direita da caixa
+  popup.style.top=rect.top+'px';
+  popup.style.left=(rect.right+10)+'px';
+
+  // Garante que não saia da tela
+  popup.style.display='block';
+  const pw=popup.offsetWidth;
+  const ph=popup.offsetHeight;
+  if(rect.right+10+pw>window.innerWidth){
+    popup.style.left=Math.max(4,rect.left-pw-10)+'px';
+  }
+  if(rect.top+ph>window.innerHeight){
+    popup.style.top=Math.max(4,window.innerHeight-ph-8)+'px';
+  }
+
+  renderDiaRows();
+  popup.classList.add('open');
+}
+
+function renderDiaRows(){
+  const rows=document.getElementById('dia-popup-rows');
+  const sorted=[...dados].sort((a,b)=>b.s.reduce((x,y)=>x+y,0)-a.s.reduce((x,y)=>x+y,0));
+  rows.innerHTML=sorted.map(v=>{
+    const extra=getCotaDia(v.nome);
+    const k=nomeKey(v.nome);
+    return`<div class="dia-row">
+      <span class="dia-name">${v.nome}</span>
+      <div class="dia-controls">
+        <button class="dia-btn" data-nome="${v.nome}" data-op="-1">−</button>
+        <span class="dia-val" id="dv-${k}">${extra}</span>
+        <button class="dia-btn" data-nome="${v.nome}" data-op="+1">+</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  rows.querySelectorAll('.dia-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      const nome=btn.dataset.nome;
+      const op=parseInt(btn.dataset.op);
+      const novoExtra=Math.max(0,getCotaDia(nome)+op);
+      salvarCotaDia(nome,novoExtra);
+      document.getElementById('dv-'+nomeKey(nome)).textContent=novoExtra;
+      // Atualiza painel esquerdo sem re-render completo
+      const totalDia=dados.reduce((s,v)=>s+vendasHojeVendedor(v),0);
+      document.getElementById('stat-dia').textContent=totalDia;
+    });
+  });
+}
+
+document.getElementById('stat-dia-trigger').addEventListener('click',abrirDiaPopup);
+document.getElementById('dia-popup-close').addEventListener('click',()=>{
+  document.getElementById('dia-popup').classList.remove('open');
+  document.getElementById('dia-popup').style.display='none';
+});
+// Fecha ao clicar fora
+document.addEventListener('click',e=>{
+  const popup=document.getElementById('dia-popup');
+  const trigger=document.getElementById('stat-dia-trigger');
+  if(popup.classList.contains('open')&&!popup.contains(e.target)&&!trigger.contains(e.target)){
+    popup.classList.remove('open');
+    popup.style.display='none';
+  }
+});
 
 window.salvarMeta=function(){
   config.meta=Math.max(1,parseInt(document.getElementById('meta-input').value)||100);
@@ -498,7 +628,9 @@ window.zerarHoje=function(){
     const k=nomeKey(v.nome);
     const base=v.s.reduce((a,b)=>a+b,0);
     snapDia[k]={data:d,base};
+    cotasDia[k]={data:d,extra:0,nome:v.nome};
     set(ref(db,`equipe_danylo/snapDia/${k}`),{data:d,base,nome:v.nome}).catch(()=>{});
+    set(ref(db,`equipe_danylo/cotasDia/${k}`),{data:d,extra:0,nome:v.nome}).catch(()=>{});
   });
   render();setSyncOk();
 };
