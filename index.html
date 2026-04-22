@@ -133,6 +133,21 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
 .stat-dia-wrap:hover .stat-number{text-shadow:0 0 40px rgba(201,168,76,0.9);}
 .stat-dia-hint{font-size:1.1vh;color:rgba(201,168,76,0.4);text-align:right;margin-top:2px;letter-spacing:0.05em;font-weight:400;}
 
+/* CLICK-TO-EDIT TOTAL MÊS */
+.stat-mes-wrap{position:relative;z-index:1;cursor:pointer;}
+.stat-mes-wrap .stat-number{transition:text-shadow 0.2s;}
+.stat-mes-wrap:hover .stat-number{text-shadow:0 0 40px rgba(201,168,76,0.9);}
+.stat-mes-hint{font-size:1.1vh;color:rgba(201,168,76,0.4);text-align:right;margin-top:2px;letter-spacing:0.05em;font-weight:400;}
+.stat-mes-input-wrap{display:none;text-align:right;position:relative;z-index:1;}
+.stat-mes-input-wrap.active{display:block;}
+.stat-mes-input{background:transparent;border:none;border-bottom:2px solid var(--gold);color:var(--gold2);font-family:"Barlow Condensed",sans-serif;font-size:9vh;font-weight:900;line-height:1;text-align:right;width:100%;text-shadow:0 0 30px rgba(201,168,76,0.4);outline:none;-moz-appearance:textfield;}
+.stat-mes-input::-webkit-outer-spin-button,.stat-mes-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.stat-mes-input::placeholder{color:rgba(201,168,76,0.3);}
+.stat-mes-hint-edit{font-size:1.1vh;color:rgba(201,168,76,0.6);text-align:right;margin-top:2px;letter-spacing:0.05em;font-weight:400;}
+.stat-mes-wrap.editing .stat-number{display:none;}
+.stat-mes-wrap.editing .stat-mes-input-wrap{display:block;}
+.stat-mes-wrap.editing .stat-mes-hint{display:none;}
+
 .dia-popup{position:fixed;z-index:200;background:#111100;border:1px solid rgba(201,168,76,0.4);border-radius:10px;padding:16px 18px;min-width:240px;box-shadow:0 8px 40px rgba(0,0,0,0.8),0 0 20px rgba(201,168,76,0.1);display:none;}
 .dia-popup.open{display:block;}
 .dia-popup-title{font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:800;color:var(--gold2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);padding-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
@@ -182,7 +197,14 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
           <div class="stat-label">Vendas</div>
           <div class="stat-sub">No mês</div>
         </div>
-        <div class="stat-number" id="stat-mes">–</div>
+        <div class="stat-mes-wrap" id="stat-mes-wrap">
+          <div class="stat-number" id="stat-mes">–</div>
+          <div class="stat-mes-hint">✏️ clique para editar</div>
+          <div class="stat-mes-input-wrap" id="stat-mes-input-wrap">
+            <input type="number" class="stat-mes-input" id="stat-mes-input" min="0" placeholder="0"/>
+            <div class="stat-mes-hint-edit">↵ confirmar &nbsp;·&nbsp; Esc cancelar</div>
+          </div>
+        </div>
         <div class="progress-wrap">
           <div class="progress-track">
             <div class="progress-fill" id="progress-fill" style="width:0%"></div>
@@ -550,6 +572,86 @@ document.addEventListener('click',e=>{
     popup.style.display='none';
   }
 });
+
+// ─── CLICK-TO-EDIT TOTAL DO MÊS ───────────────────────────────────────────
+(function(){
+  const wrap=document.getElementById('stat-mes-wrap');
+  const display=document.getElementById('stat-mes');
+  const inputWrap=document.getElementById('stat-mes-input-wrap');
+  const inp=document.getElementById('stat-mes-input');
+  let originalValue=0;
+
+  function openEdit(){
+    originalValue=parseInt(display.textContent)||0;
+    inp.value=originalValue;
+    wrap.classList.add('editing');
+    requestAnimationFrame(()=>{inp.focus();inp.select();});
+  }
+
+  function confirmEdit(){
+    const raw=parseInt(inp.value);
+    if(isNaN(raw)||raw<0){cancelEdit();return;}
+    wrap.classList.remove('editing');
+
+    // Calcular diferença para distribuir na semana atual
+    const totalAtual=dados.reduce((s,v)=>s+v.s.reduce((a,b)=>a+b,0),0);
+    const diff=raw-totalAtual;
+    if(diff===0){render();return;}
+
+    // Distribui a diferença proporcionalmente entre vendedores na última semana
+    // Se sem vendedores, ignora
+    if(dados.length===0){render();return;}
+
+    // Adiciona/remove da última semana de cada vendedor proporcionalmente
+    // Estratégia simples: aplica tudo ao primeiro vendedor em ordem original
+    // Melhor: divide igualmente entre todos
+    const lastSemana=config.semanas-1;
+    if(diff>0){
+      // Adiciona cotas distribuídas
+      const perVend=Math.floor(diff/dados.length);
+      const resto=diff-(perVend*dados.length);
+      dados.forEach((v,i)=>{
+        const add=perVend+(i===0?resto:0);
+        v.s[lastSemana]=(v.s[lastSemana]||0)+add;
+      });
+    }else{
+      // Remove cotas — cuidado pra não ir negativo
+      let toRemove=Math.abs(diff);
+      dados.forEach(v=>{
+        const avail=v.s[lastSemana]||0;
+        const rem=Math.min(avail,toRemove);
+        v.s[lastSemana]=avail-rem;
+        toRemove-=rem;
+      });
+    }
+
+    render();
+    setSyncSaving();
+    const dadosObj=Object.fromEntries(dados.map(d=>[nomeKey(d.nome),d]));
+    set(ref(db,'equipe_danylo/dados'),dadosObj).then(setSyncOk).catch(setSyncErr);
+  }
+
+  function cancelEdit(){
+    wrap.classList.remove('editing');
+    render();
+  }
+
+  wrap.addEventListener('click',e=>{
+    if(!wrap.classList.contains('editing'))openEdit();
+  });
+
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();confirmEdit();}
+    else if(e.key==='Escape'){e.preventDefault();cancelEdit();}
+    e.stopPropagation();
+  });
+
+  inp.addEventListener('blur',()=>{
+    if(wrap.classList.contains('editing'))confirmEdit();
+  });
+
+  inp.addEventListener('click',e=>e.stopPropagation());
+})();
 
 window.salvarMeta=function(){
   config.meta=Math.max(1,parseInt(document.getElementById('meta-input').value)||100);
