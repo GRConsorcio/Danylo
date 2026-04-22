@@ -417,7 +417,8 @@ function agendarResetMeiaNoite(){
 function render(){
   document.getElementById('headerTitle').textContent=(config.equipe||"Equipe").toUpperCase()+" — "+config.mes;
 
-  const totalMes=dados.reduce((s,v)=>s+v.s.reduce((a,b)=>a+b,0),0);
+  const totalVendedores=dados.reduce((s,v)=>s+v.s.reduce((a,b)=>a+b,0),0);
+  const totalMes=totalVendedores+(config.cotasFantasma||0);
   const totalDia=dados.reduce((s,v)=>s+vendasHojeVendedor(v),0);
   const meta=config.meta||100;
   const pct=Math.min(100,Math.round(totalMes/meta*100));
@@ -458,6 +459,7 @@ function render(){
   let ftds='<tr><td>TOTAL</td>';
   let gt=0;
   for(let i=0;i<config.semanas;i++){ftds+=`<td>${totS[i]}</td>`;gt+=totS[i];}
+  gt+=(config.cotasFantasma||0);
   ftds+=`<td class="col-total">${gt}</td></tr>`;
 
   wrap.innerHTML=`<table>${ths}<tbody id="tbody">${trs}</tbody><tfoot>${ftds}</tfoot></table>`;
@@ -593,42 +595,18 @@ document.addEventListener('click',e=>{
     if(isNaN(raw)||raw<0){cancelEdit();return;}
     wrap.classList.remove('editing');
 
-    // Calcular diferença para distribuir na semana atual
-    const totalAtual=dados.reduce((s,v)=>s+v.s.reduce((a,b)=>a+b,0),0);
-    const diff=raw-totalAtual;
-    if(diff===0){render();return;}
+    // Calcula total real dos vendedores (sem cotas fantasma)
+    const totalVendedores=dados.reduce((s,v)=>s+v.s.reduce((a,b)=>a+b,0),0);
+    const diff=raw-totalVendedores;
 
-    // Distribui a diferença proporcionalmente entre vendedores na última semana
-    // Se sem vendedores, ignora
-    if(dados.length===0){render();return;}
-
-    // Adiciona/remove da última semana de cada vendedor proporcionalmente
-    // Estratégia simples: aplica tudo ao primeiro vendedor em ordem original
-    // Melhor: divide igualmente entre todos
-    const lastSemana=config.semanas-1;
-    if(diff>0){
-      // Adiciona cotas distribuídas
-      const perVend=Math.floor(diff/dados.length);
-      const resto=diff-(perVend*dados.length);
-      dados.forEach((v,i)=>{
-        const add=perVend+(i===0?resto:0);
-        v.s[lastSemana]=(v.s[lastSemana]||0)+add;
-      });
-    }else{
-      // Remove cotas — cuidado pra não ir negativo
-      let toRemove=Math.abs(diff);
-      dados.forEach(v=>{
-        const avail=v.s[lastSemana]||0;
-        const rem=Math.min(avail,toRemove);
-        v.s[lastSemana]=avail-rem;
-        toRemove-=rem;
-      });
-    }
+    // Salva como cotas fantasma — diferença entre o valor digitado e o total real dos vendedores
+    config.cotasFantasma=raw-totalVendedores;
+    // Garante que não fique negativo além do que os vendedores têm
+    if(config.cotasFantasma+totalVendedores<0) config.cotasFantasma=-totalVendedores;
 
     render();
     setSyncSaving();
-    const dadosObj=Object.fromEntries(dados.map(d=>[nomeKey(d.nome),d]));
-    set(ref(db,'equipe_danylo/dados'),dadosObj).then(setSyncOk).catch(setSyncErr);
+    set(ref(db,'equipe_danylo/config'),config).then(setSyncOk).catch(setSyncErr);
   }
 
   function cancelEdit(){
